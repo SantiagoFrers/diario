@@ -157,12 +157,12 @@ listado_ordenado as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PRO
                 where mpc.dictado != 'Ocasional'
                 and (mpc.dictado = (:nro_semestre || '° Semestre') or mpc.dictado = 'Indistinto') -- TODO DESCOMENTAR CUANDO ESTE 100% TESTEADO
                 and mpc.N_AÑO_CARRERA <= :año_plan -- Año de las materias que deberia ver para la inscripcion mas las que adeude
-                --and sede = :sede -- Victoria o CABA
+                and sede = :sede or sede = 'Sin modalidad' -- Victoria o CABA
                 order by mpc.D_REGISTRO, mpc.D_APELLIDOS, mpc.D_NOMBRES, mpc.D_DESCRED
                 )
 
 
-SELECT * FROM conteo_grupos_aprobadas;
+--SELECT * FROM conteo_grupos_aprobadas;
 --SELECT * FROM materias_aprobadas_alumno;
 SELECT * FROM listado_ordenado;
 --SELECT * FROM materias_duplicadas;
