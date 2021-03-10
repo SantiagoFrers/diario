@@ -20,7 +20,7 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
                 and ap.f_baja is  null -- no este de baja
                 and ap.f_graduacion is  null -- no este graduado
                 and ap.n_promocion = :promocion
-                and ap.d_registro = 31343 -- TODO sacar este registro
+                --and ap.d_registro = 31343 -- TODO sacar este registro
                 --and ap.d_registro = 28059 -- TODO sacar este registro
                 ), 
 
@@ -54,16 +54,19 @@ materias_curso as (select *
 
 --LISTADO UNION ENTRE EL LISTADO DE MATERIAS APROBADAS POR ALUMNO Y MATERIAS EN CURSO
 
-listado_union as (SELECT * 
-    FROM table -- crear el listado de union y luego llevar al listado siguiente en reemplazo materias_aprobadas_carrera
+listado_union as (  SELECT * 
+    FROM materias_aprobadas_carrera 
+                UNION ALL 
+                    SELECT * 
+    FROM materias_curso
                 ),
 
 --LISTADO DE MATERIAS APROBADAS DE ALUMNOS POR ALUMNO (SIRVE PARA LAS DOBLES)
-materias_aprobadas_alumno as (SELECT DISTINCT ma.d_apellidos, ma.d_nombres, ma.d_registro, ma.n_promocion, ma.n_id_alu_prog, ma.n_id_persona, ma.plan1, pa.n_grupo, ma.n_req_cantidad, ma.n_id_materia, ma.n_año_carrera, ma.dictado, pa.n_credito --TODO pa agregado
-    FROM    materias_aprobadas_carrera ma,
+materias_aprobadas_alumno as (SELECT DISTINCT lu.d_apellidos, lu.d_nombres, lu.d_registro, lu.n_promocion, lu.n_id_alu_prog, lu.n_id_persona, lu.plan1, pa.n_grupo, lu.n_req_cantidad, lu.n_id_materia, lu.n_año_carrera, lu.dictado, pa.n_credito
+    FROM    listado_union lu,
             planes_activos pa
-                where ma.n_id_materia = pa.n_id_materia
-                and ma.n_id_persona = pa.n_id_persona
+                where lu.n_id_materia = pa.n_id_materia
+                and lu.n_id_persona = pa.n_id_persona
                             ),
 
 --LISTADO DE MATERIAS PENDIENTES
@@ -147,15 +150,19 @@ listado_ordenado as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PRO
                                                 and ap2.c_identificacion = 1
                                                 and ap2.f_graduacion is null
                                                 )programa_2,
-                /*mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO, */ mpc.N_ID_MATERIA, mpc.D_DESCRED, mpc.N_AÑO_CARRERA, mpc.DICTADO, mpc.sede
+                                        --Se deja comentado ya que Silvia no lo necesita, lo usamos para testear por grupo de materia
+                                        /* mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO, */ 
+                                        mpc.N_ID_MATERIA, mpc.D_DESCRED, mpc.N_AÑO_CARRERA, mpc.DICTADO, mpc.sede
     FROM    materias_pendientes_conteo mpc
                 where mpc.dictado != 'Ocasional'
                 and (mpc.dictado = (:nro_semestre || '° Semestre') or mpc.dictado = 'Indistinto') -- TODO DESCOMENTAR CUANDO ESTE 100% TESTEADO
-                and mpc.N_AÑO_CARRERA = :año_plan
+                and mpc.N_AÑO_CARRERA <= :año_plan -- Año de las materias que deberia ver para la inscripcion mas las que adeude
                 --and sede = :sede -- Victoria o CABA
                 order by mpc.D_REGISTRO, mpc.D_APELLIDOS, mpc.D_NOMBRES, mpc.D_DESCRED
                 )
-              
-SELECT * FROM materias_aprobadas_alumno;
+
+
+SELECT * FROM conteo_grupos_aprobadas;
+--SELECT * FROM materias_aprobadas_alumno;
 SELECT * FROM listado_ordenado;
 --SELECT * FROM materias_duplicadas;
