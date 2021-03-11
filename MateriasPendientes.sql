@@ -25,7 +25,7 @@ with planes as (SELECT  pg.c_identificacion || '-' || pg.c_programa || '-' || pg
 activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promocion, ap.N_ID_ALU_PROG, ap.n_id_persona,
                         ap.c_identificacion || '-' || ap.c_programa || '-' || ap.c_orientacion || '-' || ap.c_plan as plan2,
                         ap.c_identificacion || '-' || ap.c_programa || '-' || ap.c_orientacion as IPO
-                        , ap.c_vinculo, ap.c_identificacion, ap.c_programa, ap.c_orientacion, decode(ap.n_id_modalidad, '922', 'CABA', '923', 'Victoria', '924', 'Victoria', '925', 'CABA', 'Sin modalidad') as sede
+                        , ap.c_vinculo, ap.c_identificacion, ap.c_programa, ap.c_orientacion, decode(ap.n_id_modalidad, '922', 'CABA', '923', 'Victoria', '924', 'Victoria', '925', 'CABA', '1142', 'Finanzas Victoria-CABA', 'Sin modalidad') as sede
 
     FROM    alumnos_programas ap
                 where ap.c_tipo = 'Alumno' 
@@ -121,12 +121,14 @@ listado_sin_correlativas as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, m
                                                 )programa_2,
                                         --Se deja comentado ya que Silvia no lo necesita, lo usamos para testear por grupo de materia
                                         --mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO,
-                                        mpc.N_ID_MATERIA, mpc.D_DESCRED, mpc.N_AÑO_CARRERA, mpc.DICTADO, mpc.sede
+                                        mpc.N_ID_MATERIA, mpc.D_DESCRED, 
+                                        --mpc.N_AÑO_CARRERA, -- Se quita ya en caso puede duplicar materias que esten en 2 carreras en años distintos
+                                        mpc.DICTADO, mpc.sede
     FROM    materias_pendientes_conteo mpc
                 where mpc.dictado != 'Ocasional'
                 and (mpc.dictado = (:nro_semestre_inscripcion || '° Semestre') or mpc.dictado = 'Indistinto') -- Semestre al cual se estan inscribiendo
                 and mpc.N_AÑO_CARRERA <= :año_plan -- Año de las materias que deberia ver para la inscripcion mas las que adeude
-                and sede = :sede or sede = 'Sin modalidad' -- Victoria o CABA
+                and sede = :sede or sede = 'Sin modalidad' or sede = 'Finanzas Victoria-CABA'-- Victoria o CABA
                 order by mpc.D_REGISTRO, mpc.D_APELLIDOS, mpc.D_NOMBRES, mpc.D_DESCRED
                 ),
 
@@ -152,5 +154,5 @@ resumen as (select n_promocion, d_descred, sede, count(*) as "Total de alumnos"
                 ORDER BY D_DESCRED, N_PROMOCION
                 )
 
---SELECT * FROM listado_final;
+SELECT * FROM listado_final;
 SELECT * FROM resumen;
