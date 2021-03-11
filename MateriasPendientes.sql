@@ -1,3 +1,16 @@
+/*LISTADO DE MATERIAS PENDIENTES ALUMNOS GRADO
+Segun pedido se colocaron 4 filtros
+    1) Promocion: Colocar el numero de promocion a consultar
+    2) nro_semestre_inscripcion: Colocar 1 o 2 segun indicando el numero de cuatrimestre al que se estaria inscribiendo
+    3) año_plan: Colocar el año hasta que materias se deben mostrar. Ej La promocion 32 nacio el 2020, en el 2021 se deberia poner 2 y nos muestra las materias de 2 y 1 año
+    4) sede: Filtrar por Victoria o CABA
+    
+Se pueden sacar 2 listados
+    1) SELECT * FROM listado_final; Listado con detalle del alumno
+    2) SELECT * FROM resumen; Listado con el resumen de cantidad de alumnos por materia
+*/
+
+
 with planes as (SELECT  pg.c_identificacion || '-' || pg.c_programa || '-' || pg.c_orientacion || '-' || pg.c_plan as plan1, pg.c_identificacion || '-' || pg.c_programa || '-' || pg.c_orientacion as IPO1,
                         pg.d_observ, pg.n_grupo, pg.c_tipo_materias, pg.n_req_cantidad, pg.n_req_credito, pm.n_id_materia, pm."N_AÑO_CARRERA"
                         , decode(pm.c_dictado, '0', 'Ocasional', 'I', 'Indistinto', '1', '1° Semestre', '2', '1° Semestre', 'Dato vacio') dictado, pm.n_credito
