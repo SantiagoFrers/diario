@@ -20,8 +20,9 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
                 and ap.f_baja is  null -- no este de baja
                 and ap.f_graduacion is  null -- no este graduado
                 and ap.n_promocion = :promocion
-                --and ap.d_registro = 31343 -- TODO sacar este registro
-                --and ap.d_registro = 28059 -- TODO sacar este registro
+                --and ap.d_registro = 31343 -- TODO borrar cuando se acaben las pruebas
+                --and ap.d_registro = 28059 -- TODO borrar cuando se acaben las pruebas
+                --and ap.d_registro = 32004 -- TODO borrar cuando se acaben las pruebas
                 ), 
 
 --LISTADO DE ALUMNOS ACTIVOS CON LAS MATERIAS DE SUS PLANES
@@ -94,56 +95,11 @@ materias_pendientes_conteo as (select *
                 and mp.n_req_credito <= cga.cuenta)
                 ),
                             
-/* TODO BORRAR 
-------------------------------------------------------------------------------------                
-
---LISTADO DE PROGRAMAS
-listado_programas_alumnos as (SELECT pr.c_identificacion || '-' || pr.c_programa || '-' || pr.c_orientacion as IPO2, pr.d_descrip programa
-    FROM    programas pr
-                ),
-                
---LISTADO DE IPO ACTIVOS
-carrera_activa as (SELECT DISTINCT n_id_persona, IPO programa
-    FROM activos ap
-                where (c_vinculo = 'A' or c_vinculo = 'FF')-- TODO RE VERIFICAR LOS CASOS DE FIN DE FACTURACION DE UNA CARRERA Y ACTIVOS EN OTROS COMO DIFERENCIARLOS?
-                ),
-
---LISTADO FINAL, LISTADO DE MATERIAS PENDIENTES PARA INSCRIPCION DE SILVIA
-listado_ordenado as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PROMOCION, mpc.D_APELLIDOS, mpc.D_NOMBRES, lpa.programa, mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO, mpc.N_ID_MATERIA, mpc.D_DESCRED, mpc.N_AÑO_CARRERA, mpc.DICTADO
-    FROM    materias_pendientes_conteo mpc,
-            carrera_activa ca,
-            listado_programas_alumnos lpa
-                where mpc.n_id_persona = ca.n_id_persona
-                and ca.programa = lpa.IPO2
-                and mpc.dictado != 'Ocasional'
-                --and (mpc.dictado = (:Nro_Semestre || '° Semestre') or mpc.dictado = 'Indistinto') -- TODO DESCOMENTAR CUANDO ESTE 100% TESTEADO
-                order by mpc.N_GRUPO
-                ),
-            
---LISTADO CON LAS DOS CARRERAS - SE DUPLICA LAS MATERIAS EN AMBOS PLANES
-listado_ordenado_con_carrera as (SELECT *
--- lo comento para que Ale pueda ver que trae la tabla mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PROMOCION, mpc.D_APELLIDOS, pa.programa //ESTE ES EL DATO QUE HACE QUE SE DUPLIQUE // , mpc.D_NOMBRES, mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO, mpc.N_ID_MATERIA, mpc.D_DESCRED, mpc.N_AÑO_CARRERA, mpc.DICTADO
-    FROM    materias_pendientes_conteo mpc,
-            listado_programas_alumnos pa
-                where mpc.ipo1 = pa.ipo2
-                and mpc.dictado != 'Ocasional'
-                order by mpc.N_GRUPO
-                ),
-
---LISTADO DE CANTIDAD DE MATERIAS POR ALUMNO -- SIRVE PARA IDENTIFICAR LAS MATERIAS DE DISTINTOS PLANES QUE PERTENECEN A UN MISMO ALUMNO
-materias_duplicadas as (select DISTINCT mpc.N_ID_PERSONA, mpc.N_ID_MATERIA, count (*) conteo
-    FROM materias_pendientes_conteo mpc
-                where mpc.dictado != 'Ocasional'
-                GROUP BY mpc.N_ID_PERSONA, mpc.N_ID_MATERIA
-                ),
---------------------------------------------------------------------------------------------- */
-
---LISTADO FINAL PARA SILVIA - SE DUPLICA LAS MATERIAS QUE ESTEN EN AMBOS PLANES PERO DISTINTOS GRUPOS, APLICA EN DOBLES TITULACIONES
-listado_ordenado as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PROMOCION, mpc.D_APELLIDOS, mpc.D_NOMBRES, 
+--LISTADO MATERIAS PENDIENTES FINAL SIN CONTEMPLAR CORRELATIVAS - SE DUPLICA LAS MATERIAS QUE ESTEN EN AMBOS PLANES PERO DISTINTOS GRUPOS, APLICA EN DOBLES TITULACIONES
+listado_sin_correlativas as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PROMOCION, mpc.D_APELLIDOS, mpc.D_NOMBRES, 
                                 (select nvl(Listagg(UDESA.Devuelve_Desc_Programa(ap2.c_identificacion, ap2.c_programa, ap2.c_orientacion), '/ ') Within Group (Order By 1), '---')prog2
                                     from    UDESA.Alumnos_Programas ap2
                                                 where ap2.n_id_persona = mpc.n_id_persona
-                                                --and ap2.n_id_alu_prog != mpc.n_id_alu_prog --TODO BORRAR CUANDO ESTE 100% TESTEADO
                                                 and ap2.c_tipo = 'Alumno'
                                                 and ap2.n_id_acad_apoyo is null
                                                 and ap2.f_baja is null
@@ -151,18 +107,37 @@ listado_ordenado as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PRO
                                                 and ap2.f_graduacion is null
                                                 )programa_2,
                                         --Se deja comentado ya que Silvia no lo necesita, lo usamos para testear por grupo de materia
-                                        /* mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO, */ 
+                                        --mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO,
                                         mpc.N_ID_MATERIA, mpc.D_DESCRED, mpc.N_AÑO_CARRERA, mpc.DICTADO, mpc.sede
     FROM    materias_pendientes_conteo mpc
                 where mpc.dictado != 'Ocasional'
-                and (mpc.dictado = (:nro_semestre || '° Semestre') or mpc.dictado = 'Indistinto') -- TODO DESCOMENTAR CUANDO ESTE 100% TESTEADO
+                and (mpc.dictado = (:nro_semestre_inscripcion || '° Semestre') or mpc.dictado = 'Indistinto') -- Semestre al cual se estan inscribiendo
                 and mpc.N_AÑO_CARRERA <= :año_plan -- Año de las materias que deberia ver para la inscripcion mas las que adeude
                 and sede = :sede or sede = 'Sin modalidad' -- Victoria o CABA
                 order by mpc.D_REGISTRO, mpc.D_APELLIDOS, mpc.D_NOMBRES, mpc.D_DESCRED
+                ),
+
+--LISTADO DE MATERIAS CORRELATIVAS PARA CURSAR
+materias_correlativas as (select DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_ID_MATERIA, mpc.D_DESCRED, udesa.pak_inscripcion_cursos.check_correlativas(mpc.N_ID_ALU_PROG, mpc.D_REGISTRO, mpc.N_ID_MATERIA,'S') correlativa
+    from materias_pendientes_conteo mpc
+                where mpc.dictado != 'Ocasional'
+                ),
+
+--LISTADO FINAL PARA ALUMNOS
+listado_final as (select *
+    from    listado_sin_correlativas lo
+                where exists (select * from materias_correlativas mc
+                where lo.n_id_persona = mc.n_id_persona
+                and lo.n_id_materia = mc.n_id_materia
+                and mc.correlativa = 'TRUE'
+                )),
+
+--LISTADO RESUMEN POR MATERIA CANTIDAD DE ALUMNOS
+resumen as (select n_promocion, d_descred, sede, count(*) as "Total de alumnos"
+    from    listado_final lf
+                GROUP BY n_promocion, d_descred, sede
+                ORDER BY D_DESCRED, N_PROMOCION
                 )
 
-
---SELECT * FROM conteo_grupos_aprobadas;
---SELECT * FROM materias_aprobadas_alumno;
-SELECT * FROM listado_ordenado;
---SELECT * FROM materias_duplicadas;
+--SELECT * FROM listado_final;
+SELECT * FROM resumen;
