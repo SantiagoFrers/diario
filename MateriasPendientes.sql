@@ -8,6 +8,9 @@ Segun pedido se colocaron 4 filtros
 Se pueden sacar 2 listados
     1) SELECT * FROM listado_final; Listado con detalle del alumno
     2) SELECT * FROM resumen; Listado con el resumen de cantidad de alumnos por materia
+    
+TODO:
+    1) El Dpto de alumnos debe indicar si la modalidad 1142 aparece con la sede Victorio o CABA, hoy aparece en los dos
 */
 
 
@@ -30,12 +33,13 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
     FROM    alumnos_programas ap
                 where ap.c_tipo = 'Alumno' 
                 and ap.c_identificacion = 1 --Alumnos de grado
-                and ap.f_baja is  null -- no este de baja
-                and ap.f_graduacion is  null -- no este graduado
+                -- Se quita los filtros de baja y graduacion en esta parte y se agregan al final, ya que sino no podemos ver las materias aprobadas de estos n_id_alu_prog de las carreras egresadass o cambios de carrera
+                /*and ap.f_baja is  null -- no este de baja
+                --and ap.f_graduacion is  null -- no este graduado */
                 and ap.n_promocion = :promocion
                 --and ap.d_registro = 31343 -- TODO borrar cuando se acaben las pruebas
                 --and ap.d_registro = 28059 -- TODO borrar cuando se acaben las pruebas
-                --and ap.d_registro = 32004 -- TODO borrar cuando se acaben las pruebas
+                --and ap.d_registro = 30010 -- TODO borrar cuando se acaben las pruebas
                 ), 
 
 --LISTADO DE ALUMNOS ACTIVOS CON LAS MATERIAS DE SUS PLANES
@@ -99,13 +103,18 @@ conteo_grupos_aprobadas as (select d_apellidos, d_nombres, n_promocion, n_id_per
                 ),
                 
 --LISTADO DE MATERIAS PENDIENTES CON CONTEO DE GRUPOS INCLUIDO
-materias_pendientes_conteo as (select *
-    from    materias_pendientes mp
+    --Se agrega en esta parte el filtro para que solo muestre carreras activas
+materias_pendientes_conteo as (select mp.*
+    from    materias_pendientes mp,
+            alumnos_programas ap
                 where not exists (select * from conteo_grupos_aprobadas cga
                 where mp.n_id_persona = cga.n_id_persona
                 and mp.n_grupo = cga.n_grupo
                 and mp.n_req_cantidad <= cga.cuenta 
                 and mp.n_req_credito <= cga.cuenta)
+                and mp.N_ID_ALU_PROG = ap.N_ID_ALU_PROG
+                and ap.f_baja is  null -- no este de baja
+                and ap.f_graduacion is  null -- no este graduado 
                 ),
                             
 --LISTADO MATERIAS PENDIENTES FINAL SIN CONTEMPLAR CORRELATIVAS - SE DUPLICA LAS MATERIAS QUE ESTEN EN AMBOS PLANES PERO DISTINTOS GRUPOS, APLICA EN DOBLES TITULACIONES
@@ -154,5 +163,6 @@ resumen as (select n_promocion, d_descred, sede, count(*) as "Total de alumnos"
                 ORDER BY D_DESCRED, N_PROMOCION
                 )
 
+--select * from conteo_grupos_aprobadas;
 SELECT * FROM listado_final;
 SELECT * FROM resumen;
