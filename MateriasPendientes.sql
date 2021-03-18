@@ -9,8 +9,6 @@ Se pueden sacar 2 listados
     1) SELECT * FROM listado_final; Listado con detalle del alumno
     2) SELECT * FROM resumen; Listado con el resumen de cantidad de alumnos por materia
     
-TODO:
-    1) El Dpto de alumnos debe indicar si la modalidad 1142 aparece con la sede Victorio o CABA, hoy aparece en los dos
 */
 
 
@@ -28,7 +26,7 @@ with planes as (SELECT  pg.c_identificacion || '-' || pg.c_programa || '-' || pg
 activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promocion, ap.N_ID_ALU_PROG, ap.n_id_persona,
                         ap.c_identificacion || '-' || ap.c_programa || '-' || ap.c_orientacion || '-' || ap.c_plan as plan2,
                         ap.c_identificacion || '-' || ap.c_programa || '-' || ap.c_orientacion as IPO
-                        , ap.c_vinculo, ap.c_identificacion, ap.c_programa, ap.c_orientacion, decode(ap.n_id_modalidad, '922', 'CABA', '923', 'Victoria', '924', 'Victoria', '925', 'CABA', '1142', 'Finanzas Victoria-CABA', 'Sin modalidad') as sede
+                        , ap.c_vinculo, ap.c_identificacion, ap.c_programa, ap.c_orientacion, decode(ap.n_id_modalidad, '922', 'CABA', '923', 'Victoria', '924', 'Victoria', '925', 'CABA', '1142', 'Victoria', 'Sin modalidad') as sede
 
     FROM    alumnos_programas ap
                 where ap.c_tipo = 'Alumno' 
@@ -137,7 +135,7 @@ listado_sin_correlativas as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, m
                 where mpc.dictado != 'Ocasional'
                 and (mpc.dictado = (:nro_semestre_inscripcion || '° Semestre') or mpc.dictado = 'Indistinto') -- Semestre al cual se estan inscribiendo
                 and mpc.N_AÑO_CARRERA <= :año_plan -- Año de las materias que deberia ver para la inscripcion mas las que adeude
-                and sede = :sede or sede = 'Sin modalidad' or sede = 'Finanzas Victoria-CABA'-- Victoria o CABA
+                and sede = :sede or sede = 'Sin modalidad' -- Victoria o CABA
                 order by mpc.D_REGISTRO, mpc.D_APELLIDOS, mpc.D_NOMBRES, mpc.D_DESCRED
                 ),
 
