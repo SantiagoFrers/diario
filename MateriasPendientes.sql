@@ -14,7 +14,7 @@ Se pueden sacar 2 listados
 
 with planes as (SELECT  pg.c_identificacion || '-' || pg.c_programa || '-' || pg.c_orientacion || '-' || pg.c_plan as plan1, pg.c_identificacion || '-' || pg.c_programa || '-' || pg.c_orientacion as IPO1,
                         pg.d_observ, pg.n_grupo, pg.c_tipo_materias, pg.n_req_cantidad, pg.n_req_credito, pm.n_id_materia, pm."N_AÑO_CARRERA"
-                        , decode(pm.c_dictado, '0', 'Ocasional', 'I', 'Indistinto', '1', '1° Semestre', '2', '1° Semestre', 'Dato vacio') dictado, pm.n_credito
+                        , decode(pm.c_dictado, '0', 'Ocasional', 'I', 'Indistinto', '1', '1° Semestre', '2', '2° Semestre', 'Dato vacio') dictado, pm.n_credito
     FROM    planes_grupos pg,
             planes_materias pm
                 where pg.n_id_grupo = pm.n_id_grupo
