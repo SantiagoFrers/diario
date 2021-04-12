@@ -35,7 +35,7 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
                 /*and ap.f_baja is  null -- no este de baja
                 --and ap.f_graduacion is  null -- no este graduado */
                 and ap.n_promocion = :promocion
-                --and ap.d_registro = 31343 -- TODO borrar cuando se acaben las pruebas
+                --and ap.d_registro = 30040 -- TODO borrar cuando se acaben las pruebas
                 --and ap.d_registro = 28059 -- TODO borrar cuando se acaben las pruebas
                 --and ap.d_registro = 30010 -- TODO borrar cuando se acaben las pruebas
                 ), 
@@ -49,40 +49,29 @@ planes_activos as (SELECT a.*,p.* ,m.D_DESCRED, m.d_descrip
                 and p.n_id_materia = m.n_id_materia
                 ),
 
---LISTADO DE MATERIAS APROBADAS DE ALUMNOS POR CARRERA
-materias_aprobadas_carrera as (select *
-    from    planes_activos pa
-                where exists (select * 
-                                from alumnos_libretas al 
-                                    where al.n_id_materia = pa.n_id_materia
-                                    and pa.N_ID_ALU_PROG = al.N_ID_ALU_PROG
-                                    and al.c_clase_evalua = 'Final'
-                                    and al.m_aprueba_mat = 'Si'
-                )),
-                
---LISTADO DE MATERIAS EN CURSO, BUSCA AUTOMATICAMENTO EN EL SEMESTRE EN CURSO 01/03 A 31/07 1°SEMESTRE Y 01/08 A 28/02 2°SEMESTRE
-materias_curso as (select *
-    from    planes_activos pa
-                where exists (select * 
-                                from v_alumnos_cursos ac 
-                                    where ac.n_id_materia = pa.n_id_materia
-                                    and pa.N_ID_ALU_PROG = ac.N_ID_ALU_PROG
-                                    and ac.c_año_lectivo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/12', 'dd/mm') then to_number(to_char(sysdate, 'yyyy')) else (to_number(to_char(sysdate, 'yyyy'))-1) end)
-                                    and ac.n_periodo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/07', 'dd/mm') then 1 else 2 end)
-                                    and ac.c_tipo_clase = 'Teórica'
-                )),
+------------------------------------------------------------------------------------------------------
+--Nuevo - Ver de reemplazar el de aprobadas
+--LISTADO DE MATERIAS APROBADAS Y EN CURSO CON N_ID_PERSONA
+listado_union as (select a.d_apellidos, a.d_nombres, a.d_registro, a.n_promocion, a.n_id_alu_prog, a.n_id_persona, /*a.plan2,*/ al.n_id_materia
+                    from    alumnos_libretas al,
+                            activos a
+                                where a.N_ID_ALU_PROG = al.N_ID_ALU_PROG
+                                and al.c_clase_evalua = 'Final'
+                                and al.m_aprueba_mat = 'Si'
 
---LISTADO UNION ENTRE EL LISTADO DE MATERIAS APROBADAS POR ALUMNO Y MATERIAS EN CURSO
+                UNION ALL
 
-listado_union as (  SELECT * 
-    FROM materias_aprobadas_carrera 
-                UNION ALL 
-                    SELECT * 
-    FROM materias_curso
+                  select a.d_apellidos, a.d_nombres, a.d_registro, a.n_promocion, a.n_id_alu_prog, a.n_id_persona, /*a.plan2,*/ ac.n_id_materia
+                    from    v_alumnos_cursos ac,
+                            activos a
+                                where a.N_ID_ALU_PROG = ac.N_ID_ALU_PROG
+                                and ac.c_año_lectivo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/12', 'dd/mm') then to_number(to_char(sysdate, 'yyyy')) else (to_number(to_char(sysdate, 'yyyy'))-1) end)
+                                and ac.n_periodo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/07', 'dd/mm') then 1 else 2 end)
+                                and ac.c_tipo_clase = 'Teórica'
                 ),
 
 --LISTADO DE MATERIAS APROBADAS DE ALUMNOS POR ALUMNO (SIRVE PARA LAS DOBLES)
-materias_aprobadas_alumno as (SELECT DISTINCT lu.d_apellidos, lu.d_nombres, lu.d_registro, lu.n_promocion, lu.n_id_alu_prog, lu.n_id_persona, lu.plan1, pa.n_grupo, lu.n_req_cantidad, lu.n_id_materia, lu.n_año_carrera, lu.dictado, pa.n_credito
+materias_aprobadas_alumno as (SELECT DISTINCT lu.d_apellidos, lu.d_nombres, lu.d_registro, lu.n_promocion, lu.n_id_alu_prog, lu.n_id_persona, /*a.plan2,*/ pa.n_grupo, pa.n_req_cantidad, lu.n_id_materia, pa.n_año_carrera, pa.dictado, pa.n_credito
     FROM    listado_union lu,
             planes_activos pa
                 where lu.n_id_materia = pa.n_id_materia
@@ -118,7 +107,7 @@ materias_pendientes_conteo as (select mp.*
                 and ap.f_baja is  null -- no este de baja
                 and ap.f_graduacion is  null -- no este graduado 
                 ),
-                            
+
 --LISTADO MATERIAS PENDIENTES FINAL SIN CONTEMPLAR CORRELATIVAS - SE DUPLICA LAS MATERIAS QUE ESTEN EN AMBOS PLANES PERO DISTINTOS GRUPOS, APLICA EN DOBLES TITULACIONES
 listado_sin_correlativas as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, mpc.N_PROMOCION, mpc.D_APELLIDOS, mpc.D_NOMBRES, 
                                 (select nvl(Listagg(UDESA.Devuelve_Desc_Programa(ap2.c_identificacion, ap2.c_programa, ap2.c_orientacion), '/ ') Within Group (Order By 1), '---')prog2
@@ -165,6 +154,6 @@ resumen as (select n_promocion, programa_2, d_descred, sede, count(*) as "Total 
                 ORDER BY D_DESCRED, N_PROMOCION
                 )
 
---select * from conteo_grupos_aprobadas;
---SELECT * FROM listado_final;
+select * from listado_final;
+SELECT * FROM conteo_grupos_aprobadas;
 SELECT * FROM resumen;
