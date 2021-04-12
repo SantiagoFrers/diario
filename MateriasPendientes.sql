@@ -52,20 +52,24 @@ planes_activos as (SELECT a.*,p.* ,m.D_DESCRED, m.d_descrip
 --LISTADO DE MATERIAS APROBADAS DE ALUMNOS POR CARRERA
 materias_aprobadas_carrera as (select *
     from    planes_activos pa
-                where exists (select * from alumnos_libretas al where al.n_id_materia = pa.n_id_materia
-                and pa.N_ID_ALU_PROG = al.N_ID_ALU_PROG
-                and al.c_clase_evalua = 'Final'
-                and al.m_aprueba_mat = 'Si'
+                where exists (select * 
+                                from alumnos_libretas al 
+                                    where al.n_id_materia = pa.n_id_materia
+                                    and pa.N_ID_ALU_PROG = al.N_ID_ALU_PROG
+                                    and al.c_clase_evalua = 'Final'
+                                    and al.m_aprueba_mat = 'Si'
                 )),
                 
 --LISTADO DE MATERIAS EN CURSO, BUSCA AUTOMATICAMENTO EN EL SEMESTRE EN CURSO 01/03 A 31/07 1°SEMESTRE Y 01/08 A 28/02 2°SEMESTRE
 materias_curso as (select *
     from    planes_activos pa
-                where exists (select * from v_alumnos_cursos ac where ac.n_id_materia = pa.n_id_materia
-                and pa.N_ID_ALU_PROG = ac.N_ID_ALU_PROG
-                and ac.c_año_lectivo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/12', 'dd/mm') then to_number(to_char(sysdate, 'yyyy')) else (to_number(to_char(sysdate, 'yyyy'))-1) end)
-                and ac.n_periodo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/07', 'dd/mm') then 1 else 2 end)
-                and ac.c_tipo_clase = 'Teórica'
+                where exists (select * 
+                                from v_alumnos_cursos ac 
+                                    where ac.n_id_materia = pa.n_id_materia
+                                    and pa.N_ID_ALU_PROG = ac.N_ID_ALU_PROG
+                                    and ac.c_año_lectivo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/12', 'dd/mm') then to_number(to_char(sysdate, 'yyyy')) else (to_number(to_char(sysdate, 'yyyy'))-1) end)
+                                    and ac.n_periodo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/07', 'dd/mm') then 1 else 2 end)
+                                    and ac.c_tipo_clase = 'Teórica'
                 )),
 
 --LISTADO UNION ENTRE EL LISTADO DE MATERIAS APROBADAS POR ALUMNO Y MATERIAS EN CURSO
@@ -155,12 +159,12 @@ listado_final as (select *
                 )),
 
 --LISTADO RESUMEN POR MATERIA CANTIDAD DE ALUMNOS
-resumen as (select n_promocion, d_descred, sede, count(*) as "Total de alumnos"
+resumen as (select n_promocion, programa_2, d_descred, sede, count(*) as "Total de alumnos"
     from    listado_final lf
-                GROUP BY n_promocion, d_descred, sede
+                GROUP BY n_promocion, programa_2, d_descred, sede
                 ORDER BY D_DESCRED, N_PROMOCION
                 )
 
 --select * from conteo_grupos_aprobadas;
-SELECT * FROM listado_final;
+--SELECT * FROM listado_final;
 SELECT * FROM resumen;
