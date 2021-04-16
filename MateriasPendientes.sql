@@ -148,6 +148,18 @@ listado_final as (select *
                 and lo.n_id_materia = mc.n_id_materia
                 and mc.correlativa = 'TRUE'
                 )),
+                
+listado_diferencia_modulos as (select *
+    from listado_final lf
+                where c_tipo_materias = 'OBLIGATORIO'
+                
+                UNION ALL
+                
+                select distinct n_id_persona, d_registro, n_promocion, d_apellidos, d_nombres, programa_2, n_grupo, d_observ, c_tipo_materias, n_req_cantidad, n_req_credito, conteo_actual, pendiente, null as n_id_materia, null as d_descred, null as dictado, sede
+    from listado_final lf
+                where c_tipo_materias = 'ELECTIVO' 
+                or c_tipo_materias = 'OPTATIVO'
+                ),
 
 --LISTADO RESUMEN POR MATERIA CANTIDAD DE ALUMNOS
 resumen as (select n_promocion, programa_2, d_descred, sede, count(*) as "Total de alumnos"
@@ -156,6 +168,8 @@ resumen as (select n_promocion, programa_2, d_descred, sede, count(*) as "Total 
                 ORDER BY D_DESCRED, N_PROMOCION
                 )
 
+select * from listado_diferencia_modulos;
 select * from listado_final;
-SELECT * FROM conteo_grupos_aprobadas;
 SELECT * FROM resumen;
+
+SELECT * FROM conteo_grupos_aprobadas;
