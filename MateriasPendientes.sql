@@ -35,7 +35,7 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
                 /*and ap.f_baja is  null -- no este de baja
                 --and ap.f_graduacion is  null -- no este graduado */
                 and ap.n_promocion = :promocion
-                --and ap.d_registro = 30040 -- TODO borrar cuando se acaben las pruebas
+                --and ap.d_registro = 30323 -- TODO borrar cuando se acaben las pruebas
                 --and ap.d_registro = 28059 -- TODO borrar cuando se acaben las pruebas
                 --and ap.d_registro = 30010 -- TODO borrar cuando se acaben las pruebas
                 ), 
@@ -120,11 +120,13 @@ listado_sin_correlativas as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, m
                                                 and ap2.f_graduacion is null
                                                 )programa_2,
                                         --Se deja comentado ya que Silvia no lo necesita, lo usamos para testear por grupo de materia
-                                        --mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO,
+                                        mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO, nvl(mga.cuenta,0) conteo_actual,(mpc.N_REQ_CANTIDAD + mpc.N_REQ_CREDITO - nvl(mga.cuenta,0)) pendiente,
                                         mpc.N_ID_MATERIA, mpc.D_DESCRED, 
                                         --mpc.N_AÑO_CARRERA, -- Se quita ya en caso puede duplicar materias que esten en 2 carreras en años distintos
                                         mpc.DICTADO, mpc.sede
     FROM    materias_pendientes_conteo mpc
+            left join conteo_grupos_aprobadas mga on mpc.N_ID_PERSONA = mga.N_ID_PERSONA
+                and mpc.n_grupo = mga.n_grupo
                 where mpc.dictado != 'Ocasional'
                 and (mpc.dictado = (:nro_semestre_inscripcion || '° Semestre') or mpc.dictado = 'Indistinto') -- Semestre al cual se estan inscribiendo
                 and mpc.N_AÑO_CARRERA <= :año_plan -- Año de las materias que deberia ver para la inscripcion mas las que adeude
