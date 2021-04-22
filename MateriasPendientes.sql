@@ -68,6 +68,7 @@ listado_union as (select a.d_apellidos, a.d_nombres, a.d_registro, a.n_promocion
                                 and ac.c_año_lectivo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/12', 'dd/mm') then to_number(to_char(sysdate, 'yyyy')) else (to_number(to_char(sysdate, 'yyyy'))-1) end)
                                 and ac.n_periodo = (case when (sysdate) BETWEEN to_date('01/03', 'dd/mm') and to_date('31/07', 'dd/mm') then 1 else 2 end)
                                 and ac.c_tipo_clase = 'Teórica'
+                                and f_baja is null
                 ),
 
 --LISTADO DE MATERIAS APROBADAS DE ALUMNOS POR ALUMNO (SIRVE PARA LAS DOBLES)
