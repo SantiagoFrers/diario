@@ -150,7 +150,7 @@ listado_final as (select *
                 and mc.correlativa = 'TRUE'
                 )),
                 
-listado_diferencia_modulos as (select *
+listado_diferencia_modulos as (select n_id_persona "ID persona", d_registro "Legajo", n_promocion "Promocion", d_apellidos "Apellidos", d_nombres "Nombres", programa_2 "Carrera", n_grupo "Modulo Materias", d_observ "Nombre modulo", c_tipo_materias "Tipo de materia", n_req_cantidad "Materias requeridas", n_req_credito "Creditos requeridos", conteo_actual "Materias o creditos actual", pendiente "Materiaso ocreditos pendientes", n_id_materia "ID Materia", d_descred "Codigo Materia", dictado "Semestre de dictado", sede "Sede"
     from listado_final lf
                 where c_tipo_materias = 'OBLIGATORIO'
                 
