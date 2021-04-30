@@ -1,9 +1,10 @@
 /*LISTADO DE MATERIAS PENDIENTES ALUMNOS GRADO
-Segun pedido se colocaron 4 filtros
+Segun pedido se colocaron 5 filtros
     1) Promocion: Colocar el numero de promocion a consultar
     2) nro_semestre_inscripcion: Colocar 1 o 2 segun indicando el numero de cuatrimestre al que se estaria inscribiendo
     3) año_plan: Colocar el año hasta que materias se deben mostrar. Ej La promocion 32 nacio el 2020, en el 2021 se deberia poner 2 y nos muestra las materias de 2 y 1 año
     4) sede: Filtrar por Victoria o CABA
+    5) fecha_ingreso_desde_excluir: Sirve para excluir alumnos proximo semestre
     
 Se pueden sacar 2 listados
     1) SELECT * FROM listado_final; Listado con detalle del alumno
@@ -31,13 +32,9 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
     FROM    alumnos_programas ap
                 where ap.c_tipo = 'Alumno' 
                 and ap.c_identificacion = 1 --Alumnos de grado
-                -- Se quita los filtros de baja y graduacion en esta parte y se agregan al final, ya que sino no podemos ver las materias aprobadas de estos n_id_alu_prog de las carreras egresadass o cambios de carrera
-                /*and ap.f_baja is  null -- no este de baja
-                --and ap.f_graduacion is  null -- no este graduado */
                 and ap.n_promocion = :promocion
+                and ap.f_ingreso < :fecha_ingreso_desde_excluir -- Se agrega este limite de fechas para poder excluir ingresantes del proximo semestre
                 --and ap.d_registro = 30323 -- TODO borrar cuando se acaben las pruebas
-                --and ap.d_registro = 28059 -- TODO borrar cuando se acaben las pruebas
-                --and ap.d_registro = 30010 -- TODO borrar cuando se acaben las pruebas
                 ), 
 
 --LISTADO DE ALUMNOS ACTIVOS CON LAS MATERIAS DE SUS PLANES
@@ -49,8 +46,6 @@ planes_activos as (SELECT a.*,p.* ,m.D_DESCRED, m.d_descrip
                 and p.n_id_materia = m.n_id_materia
                 ),
 
-------------------------------------------------------------------------------------------------------
---Nuevo - Ver de reemplazar el de aprobadas
 --LISTADO DE MATERIAS APROBADAS Y EN CURSO CON N_ID_PERSONA
 listado_union as (select a.d_apellidos, a.d_nombres, a.d_registro, a.n_promocion, a.n_id_alu_prog, a.n_id_persona, /*a.plan2,*/ al.n_id_materia
                     from    alumnos_libretas al,
@@ -120,7 +115,6 @@ listado_sin_correlativas as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, m
                                                 and ap2.c_identificacion = 1
                                                 and ap2.f_graduacion is null
                                                 )programa_2,
-                                        --Se deja comentado ya que Silvia no lo necesita, lo usamos para testear por grupo de materia
                                         mpc.N_GRUPO, mpc.D_OBSERV, mpc.C_TIPO_MATERIAS, mpc.N_REQ_CANTIDAD, mpc.N_REQ_CREDITO, nvl(mga.cuenta,0) conteo_actual,(mpc.N_REQ_CANTIDAD + mpc.N_REQ_CREDITO - nvl(mga.cuenta,0)) pendiente,
                                         mpc.N_ID_MATERIA, mpc.D_DESCRED, 
                                         --mpc.N_AÑO_CARRERA, -- Se quita ya en caso puede duplicar materias que esten en 2 carreras en años distintos
