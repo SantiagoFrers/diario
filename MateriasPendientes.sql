@@ -149,10 +149,18 @@ listado_final as (select *
                 and lo.n_id_materia = mc.n_id_materia
                 and mc.correlativa = 'TRUE'
                 )),
-                
-listado_diferencia_modulos as (select n_id_persona "ID persona", d_registro "Legajo", n_promocion "Promocion", d_apellidos "Apellidos", d_nombres "Nombres", programa_2 "Carrera", n_grupo "Modulo Materias", d_observ "Nombre modulo", c_tipo_materias "Tipo de materia", n_req_cantidad "Materias requeridas", n_req_credito "Creditos requeridos", conteo_actual "Materias o creditos actual", pendiente "Materiaso ocreditos pendientes", n_id_materia "ID Materia", d_descred "Codigo Materia", dictado "Semestre de dictado", sede "Sede"
-    from listado_final lf
-                where c_tipo_materias = 'OBLIGATORIO'
+
+--LISTADO INDIVIDUAL OBLIGATORIAS Y MODULOS DE ELECTIVAS / OPTATIVAS                
+listado_diferencia_modulos as (select x.n_id_persona "ID persona", x.d_registro "Legajo", x.n_promocion "Promocion", x.d_apellidos "Apellidos", x.d_nombres "Nombres", x.programa_2 "Carrera", x.n_grupo "Modulo Materias", lf.d_observ "Nombre modulo", lf.c_tipo_materias "Tipo de materia", lf.n_req_cantidad "Materias requeridas", lf.n_req_credito "Creditos requeridos", lf.conteo_actual "Materias o creditos actual", lf.pendiente "Materiaso ocreditos pendientes", x.n_id_materia "ID Materia", lf.d_descred "Codigo Materia", lf.dictado "Semestre de dictado", sede "Sede"
+                --Se realiza este paso para quitar las materias obligatorias que aparecian dos veces por pertencer a modulos distintos
+                from (select distinct n_id_persona, d_registro, n_promocion, d_apellidos, d_nombres, programa_2, n_id_materia, max(n_grupo) n_grupo
+                    from listado_final lf1
+                        where c_tipo_materias = 'OBLIGATORIO'
+                        group by n_id_persona, d_registro, n_promocion, d_apellidos, d_nombres, programa_2, n_id_materia) x
+                    left join listado_final lf on x.n_id_persona = lf.n_id_persona
+                                                and x.n_grupo = lf.n_grupo
+                                                and x.n_id_materia = lf.n_id_materia
+                    
                 
                 UNION ALL
                 
