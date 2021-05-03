@@ -164,11 +164,22 @@ listado_diferencia_modulos as (select x.n_id_persona "ID persona", x.d_registro 
                 or c_tipo_materias = 'OPTATIVO'
                 ),
 
---LISTADO RESUMEN POR MATERIA CANTIDAD DE ALUMNOS
-resumen as (select n_promocion, programa_2, d_descred, sede, count(*) as "Total de alumnos"
-    from    listado_final lf
-                GROUP BY n_promocion, programa_2, d_descred, sede
-                ORDER BY D_DESCRED, N_PROMOCION
+--LISTADO RESUMEN POR MATERIA Y MODULO CANTIDAD DE ALUMNOS
+--Obligatorias: Totaliza por materia
+--Electivas / Optativas: Totaliza por modulo
+resumen as (select ID_Materia, Codigo_Materia, modulo_materias, nombre_modulo, promocion, count(*) total_alumnos
+                from (select id_materia, Codigo_Materia, case
+                                                when id_materia is not null then 0
+                                                else Modulo_Materias
+                                              end as modulo_materias,
+                                              case
+                                                when id_materia is not null then '-'
+                                                else Nombre_modulo
+                                              end as nombre_modulo, 
+                                promocion /*carrera,*/ 
+                        from    listado_diferencia_modulos) x
+                    GROUP BY ID_Materia, Codigo_Materia, modulo_materias, nombre_modulo, promocion  --,carrera
+                ORDER BY 1
                 )
 
 select * from listado_diferencia_modulos;
