@@ -167,19 +167,20 @@ listado_diferencia_modulos as (select x.n_id_persona ID_persona, x.d_registro Le
 --LISTADO RESUMEN POR MATERIA Y MODULO CANTIDAD DE ALUMNOS
 --Obligatorias: Totaliza por materia
 --Electivas / Optativas: Totaliza por modulo
-resumen as (select ID_Materia, Codigo_Materia, modulo_materias, nombre_modulo, promocion, count(*) total_alumnos
-                from (select id_materia, Codigo_Materia, case
-                                                when id_materia is not null then 0
-                                                else Modulo_Materias
-                                              end as modulo_materias,
+resumen as (select Tipo_materia, modulo_materia, nombre_modulo_materia, promocion/*, carrera*/, count(*) total_alumnos
+                from (select decode(Tipo_materia, 'ELECTIVO', 'MODULO DE ELECTIVAS', 'OPTATIVO', 'MODULO DE OPTATIVAS', 'OBLIGATORIO', 'MATERIA OBLIGATORIA', 'OTROS') Tipo_materia,
                                               case
-                                                when id_materia is not null then '-'
+                                                when id_materia is not null then id_materia
+                                                else Modulo_Materias
+                                              end as modulo_materia,
+                                              case
+                                                when id_materia is not null then Codigo_Materia
                                                 else Nombre_modulo
-                                              end as nombre_modulo, 
-                                promocion /*carrera,*/ 
+                                              end as nombre_modulo_materia, 
+                                promocion--, carrera
                         from    listado_diferencia_modulos)
-                    GROUP BY ID_Materia, Codigo_Materia, modulo_materias, nombre_modulo, promocion  --,carrera
-                ORDER BY 1
+                    GROUP BY Tipo_materia, modulo_materia, nombre_modulo_materia, promocion  --,carrera
+                ORDER BY 2
                 )
 
 --select * from listado_diferencia_modulos;
