@@ -145,7 +145,7 @@ listado_final as (select *
                 )),
 
 --LISTADO INDIVIDUAL OBLIGATORIAS Y MODULOS DE ELECTIVAS / OPTATIVAS                
-listado_diferencia_modulos as (select x.n_id_persona "ID persona", x.d_registro "Legajo", x.n_promocion "Promocion", x.d_apellidos "Apellidos", x.d_nombres "Nombres", x.programa_2 "Carrera", x.n_grupo "Modulo Materias", lf.d_observ "Nombre modulo", lf.c_tipo_materias "Tipo de materia", lf.n_req_cantidad "Materias requeridas", lf.n_req_credito "Creditos requeridos", lf.conteo_actual "Materias o creditos actual", lf.pendiente "Materiaso ocreditos pendientes", x.n_id_materia "ID Materia", lf.d_descred "Codigo Materia", lf.dictado "Semestre de dictado", sede "Sede"
+listado_diferencia_modulos as (select x.n_id_persona ID_persona, x.d_registro Legajo, x.n_promocion Promocion, x.d_apellidos apellidos, x.d_nombres nombres, x.programa_2 carrera, x.n_grupo Modulo_Materias, lf.d_observ Nombre_modulo, lf.c_tipo_materias Tipo_materia, lf.n_req_cantidad Materias_requeridas, lf.n_req_credito Creditos_requeridos, lf.conteo_actual Materias_creditos_actual, lf.pendiente Materiaso_creditos_pendientes, x.n_id_materia ID_Materia, lf.d_descred Codigo_Materia, lf.dictado Semestre_dictado, sede Sede
                 --Se realiza este paso para quitar las materias obligatorias que aparecian dos veces por pertencer a modulos distintos
                 from (select distinct n_id_persona, d_registro, n_promocion, d_apellidos, d_nombres, programa_2, n_id_materia, max(n_grupo) n_grupo
                     from listado_final lf1
@@ -177,13 +177,12 @@ resumen as (select ID_Materia, Codigo_Materia, modulo_materias, nombre_modulo, p
                                                 else Nombre_modulo
                                               end as nombre_modulo, 
                                 promocion /*carrera,*/ 
-                        from    listado_diferencia_modulos) x
+                        from    listado_diferencia_modulos)
                     GROUP BY ID_Materia, Codigo_Materia, modulo_materias, nombre_modulo, promocion  --,carrera
                 ORDER BY 1
                 )
 
-select * from listado_diferencia_modulos;
-select * from listado_final;
+--select * from listado_diferencia_modulos;
 SELECT * FROM resumen;
 
 SELECT * FROM conteo_grupos_aprobadas;
