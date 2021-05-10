@@ -33,7 +33,8 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
                 where ap.c_tipo = 'Alumno' 
                 and ap.c_identificacion = 1 --Alumnos de grado
                 and ap.n_promocion = :promocion
-                and ap.f_ingreso < :fecha_ingreso_desde_excluir -- Se agrega este limite de fechas para poder excluir ingresantes del proximo semestre
+                and ( nvl(:fecha_ingreso_desde_excluir, 'TODOS') = 'TODOS'
+                    or ap.f_ingreso < :fecha_ingreso_desde_excluir) -- Se agrega este limite de fechas para poder excluir ingresantes del proximo semestre
                 --and ap.d_registro = 30323 -- TODO borrar cuando se acaben las pruebas
                 ), 
 
@@ -183,7 +184,9 @@ resumen as (select Tipo_materia, modulo_materia, nombre_modulo_materia, promocio
                 ORDER BY 2
                 )
 
---select * from listado_diferencia_modulos;
+select * from listado_diferencia_modulos;
 SELECT * FROM resumen;
+
+--(SELECT decode(:tipo_reporte, 'Detallado', 'listado_diferencia_modulos', 'Resumen', 'resumen') FROM dual);
 
 SELECT * FROM conteo_grupos_aprobadas;
