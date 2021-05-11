@@ -155,6 +155,7 @@ listado_diferencia_modulos as (select x.n_id_persona ID_persona, x.d_registro Le
                     left join listado_final lf on x.n_id_persona = lf.n_id_persona
                                                 and x.n_grupo = lf.n_grupo
                                                 and x.n_id_materia = lf.n_id_materia
+                                                and lf.c_tipo_materias = 'OBLIGATORIO'
                     
                 
                 UNION ALL
@@ -186,7 +187,4 @@ resumen as (select Tipo_materia, modulo_materia, nombre_modulo_materia, promocio
 
 select * from listado_diferencia_modulos;
 SELECT * FROM resumen;
-
---(SELECT decode(:tipo_reporte, 'Detallado', 'listado_diferencia_modulos', 'Resumen', 'resumen') FROM dual);
-
 SELECT * FROM conteo_grupos_aprobadas;
