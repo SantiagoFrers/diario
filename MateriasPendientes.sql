@@ -32,7 +32,7 @@ activos as (SELECT      ap.d_apellidos, ap.d_nombres, ap.d_registro, ap.n_promoc
     FROM    alumnos_programas ap
                 where ap.c_tipo = 'Alumno' 
                 and ap.c_identificacion = 1 --Alumnos de grado
-                and ap.n_promocion = :promocion
+                and ap.n_promocion in (:promocion1, :promocion2, :promocion3, :promocion4, :promocion5, :promocion6)
                 and ( nvl(:fecha_ingreso_desde_excluir, 'TODOS') = 'TODOS'
                     or ap.f_ingreso < :fecha_ingreso_desde_excluir) -- Se agrega este limite de fechas para poder excluir ingresantes del proximo semestre
                 --and ap.d_registro = 30323 -- TODO borrar cuando se acaben las pruebas
@@ -125,7 +125,13 @@ listado_sin_correlativas as (SELECT DISTINCT mpc.N_ID_PERSONA, mpc.D_REGISTRO, m
                 and mpc.n_grupo = mga.n_grupo
                 where mpc.dictado != 'Ocasional'
                 and (mpc.dictado = (:nro_semestre_inscripcion || '° Semestre') or mpc.dictado = 'Indistinto') -- Semestre al cual se estan inscribiendo
-                and mpc.N_AÑO_CARRERA <= :año_plan -- Año de las materias que deberia ver para la inscripcion mas las que adeude
+                -- Filtro entre promocion y año del plan de estudio
+                and (mpc.n_promocion = :promocion1 and mpc.N_AÑO_CARRERA <= :año_plan1
+                or mpc.n_promocion = :promocion2 and mpc.N_AÑO_CARRERA <= :año_plan2
+                or mpc.n_promocion = :promocion3 and mpc.N_AÑO_CARRERA <= :año_plan3
+                or mpc.n_promocion = :promocion4 and mpc.N_AÑO_CARRERA <= :año_plan4
+                or mpc.n_promocion = :promocion5 and mpc.N_AÑO_CARRERA <= :año_plan5
+                or mpc.n_promocion = :promocion6 and mpc.N_AÑO_CARRERA <= :año_plan6)
                 and sede = :sede or sede = 'Sin modalidad' -- Victoria o CABA
                 order by mpc.D_REGISTRO, mpc.D_APELLIDOS, mpc.D_NOMBRES, mpc.D_DESCRED
                 ),
