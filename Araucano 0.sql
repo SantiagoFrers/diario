@@ -1,3 +1,4 @@
+--Archivo araucano 0
 select  ap.n_id_persona,
         ap.n_id_alu_prog,
         ap.c_identificacion,
