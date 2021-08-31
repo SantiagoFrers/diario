@@ -9,24 +9,26 @@ with alumnos as (select ap.n_id_alu_prog,
                         pac_bloqueos_udesa.prom_gral_acumulado(ap.n_id_alu_prog) prom_acumulado,
                         pac_bloqueos_udesa.prom_carrera_periodo(ap.n_id_alu_prog, (select vw.f_inicio from vw_calendarios vw where vw.n_id_cal_periodo = :P1_PERIODO_HASTA), (select vw.f_fin from vw_calendarios vw where vw.n_id_cal_periodo = :P1_PERIODO_HASTA), 'TODAS_MATERIAS') prom_periodo,
                         decode(ap.c_programa, 11, null, devuelve_dato_arancel(ap.n_id_alu_prog,'FALTANTES')) cuotas_faltantes,
-                        udesa.cursa_dos_carreras(ap.d_registro,ap.c_identificacion) multiple_cursado
+                        udesa.cursa_dos_carreras(ap.d_registro,ap.c_identificacion) multiple_cursado,
+                        nvl((select c_email from correos c1 where c1.n_id_persona = ap.n_id_persona and c1.c_correo = 'E-Mail Interno'), '-') mail_udesa,
+                        nvl((select c_email from correos c2 where c2.n_id_persona = ap.n_id_persona and c2.c_correo = 'e-mail 1'), '-') mail_personal,
+                        nvl((select c_email from familia f where f.n_id_persona = ap.n_id_persona and f.c_parentesco = 'Resp. Arancel'), '-') mail_resp
                     from alumnos_programas ap,
-                        programas p
-                             where ap.c_tipo = 'Alumno'
-                               and ap.n_id_acad_apoyo is null
-                               and ap.f_graduacion is null
-                               and (ap.n_id_alu_prog_sig is null or ap.c_baja in ('CC','CP'))
-                               and (ap.f_baja is null or ap.f_baja >= (select vw.f_fin from vw_calendarios vw      where vw.n_id_cal_periodo = :P1_PERIODO_HASTA))
-                               and ap.c_identificacion = 1
-                               --and ap.c_programa       = decode(:p_prog,  0, ap.c_programa,       :p_prog)
-                               --and ap.c_orientacion    = decode(:p_orien, 0, ap.c_orientacion,    :p_orien)
-                               and ap.n_promocion between nvl(:p1_promo_desde,0) and nvl(:p1_promo_hasta,99999)
-                               and ap.c_identificacion = p.c_identificacion
-                               and ap.c_programa = p.c_programa
-                               and ap.c_orientacion = p.c_orientacion
-                               and ap.c_vinculo  not in ('FF','N')
-                               and decode(ap.c_programa, 11, 1, devuelve_dato_arancel(ap.n_id_alu_prog,'FALTANTES')) > 0
-                               and ((:p1_becarios = 'Si' 
+                        programas p 
+                             where 1 = 1
+                             and ap.c_identificacion = p.c_identificacion and ap.c_programa = p.c_programa and ap.c_orientacion = p.c_orientacion
+                             and ap.c_tipo = 'Alumno'
+                             and ap.n_id_acad_apoyo is null
+                             and ap.f_graduacion is null
+                             and (ap.n_id_alu_prog_sig is null or ap.c_baja in ('CC','CP'))
+                             and (ap.f_baja is null or ap.f_baja >= (select vw.f_fin from vw_calendarios vw      where vw.n_id_cal_periodo = :P1_PERIODO_HASTA))
+                             and ap.c_identificacion = 1                             
+                             --and ap.c_programa       = decode(:p_prog,  0, ap.c_programa,       :p_prog)
+                             --and ap.c_orientacion    = decode(:p_orien, 0, ap.c_orientacion,    :p_orien)
+                             and ap.n_promocion between nvl(:p1_promo_desde,0) and nvl(:p1_promo_hasta,99999)
+                             and ap.c_vinculo  not in ('FF','N')
+                             and decode(ap.c_programa, 11, 1, devuelve_dato_arancel(ap.n_id_alu_prog,'FALTANTES')) > 0
+                             and ((:p1_becarios = 'Si' 
                                      and exists (select 1
                                                    from becas_alumnos_cab bac,
                                                         becas_alumnos ba,
@@ -92,11 +94,15 @@ alumnos_becas as (select bac.n_id_alu_prog aluprog_q3, b.d_descrip desc_beca, ba
                        and ba.n_id_beca_fin = b.n_id_beca_fin )
 
 SELECT distinct a. promocion "Promocion", a.alumno "Alumno", a.legajo "Legajo", a.orientacion "Orientacion", a.f_ingreso "Fecha ingreso", decode(a.multiple_cursado, 'True', 'Si', 'False', 'No') "Doble carrera", a.promedio_general "Prom. General", a.prom_periodo as "Prom. Perido", a.prom_acumulado "Prom. Acumulado",
-        (select pac_bloqueos_udesa.cant_aplazos_alumno (a.n_id_alu_prog , 'N') from dual) "Aplazos Totales",
-        a.cuotas_faltantes "Cuotas Faltantes",
-        (select nvl(Listagg(ap.materia || ' - ' || ap.nota, ' / ') Within Group (Order By 1), '---') from aplazos ap where a.n_id_alu_prog = ap.aluprog_q2) "Aplazos del Periodo",
+        (select pac_bloqueos_udesa.cant_aplazos_alumno (a.n_id_alu_prog , 'N') from dual) "Aplazos Totales", a.cuotas_faltantes "Cuotas Faltantes",
+        (select nvl(Listagg(ap.materia || ': ' || ap.nota, ' / ') Within Group (Order By 1), '---') from aplazos ap where a.n_id_alu_prog = ap.aluprog_q2) "Aplazos del Periodo",
         (select nvl(Listagg(b.d_descred, ' / ') Within Group (Order By 1), '---') from bajas b where a.n_id_alu_prog = b.n_id_alu_prog_q4) "Bajas Materias",
-        (select nvl(Listagg(ab.desc_beca || ' - ' || ab.porc_beca, ' / ') Within Group (Order By 1), '---') from alumnos_becas ab where a.n_id_alu_prog = ab.aluprog_q3) "Asistencia financiera"
+        (select nvl(Listagg(ab.desc_beca || ' ' || ab.porc_beca || '%', ' / ') Within Group (Order By 1), '---') from alumnos_becas ab where a.n_id_alu_prog = ab.aluprog_q3) "Asistencia financiera",
+        a.mail_udesa "E-mail UdeSA", a.mail_personal "E-mail Personal", a.mail_resp "E-mail Resp Arancel",
+         case when a.prom_acumulado is null and a.promedio_general < 6 then 'Primer año con promedio inferior a 6 puntos' when a.prom_acumulado is not null and a.promedio_general < 6.5 and a.prom_acumulado < 6.5 then 'No alcanzaste el promedio igual o superior a 6,50' else '' end "Msj. Promedio",
+         case when a.multiple_cursado = 'True' and a.promedio_general < 7.5 and promedio_general < 7.5 then 'No cumple con promedio para DT' else '-' end as "Msj. Doble titulacion",
+         case when (select pac_bloqueos_udesa.cant_aplazos_alumno (a.n_id_alu_prog , 'N') from dual) = 1 then 'Gastaste tu aplazo permitido' when (select pac_bloqueos_udesa.cant_aplazos_alumno (a.n_id_alu_prog , 'N') from dual) >= 2 then 'Pierde beca/premio' else '' end "Msj. Aplazos",
+         case when (select count(*) from bajas b where a.n_id_alu_prog = b.n_id_alu_prog_q4) > 1 then 'Tope de baja de materias' else '' end "Msj. Baja materias"
     FROM alumnos a
         order by 2, 1
         ;
