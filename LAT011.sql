@@ -59,6 +59,20 @@ aplazos as (select ap.n_id_alu_prog aluprog_q2, m.d_descrip materia, nvl(al.d_no
                        and fun_between_fechas(al.f_rinde, al.f_rinde, (select vw.f_inicio from vw_calendarios vw      where vw.n_id_cal_periodo = :P1_PERIODO_HASTA), (select vw.f_fin from vw_calendarios vw      where vw.n_id_cal_periodo = :P1_PERIODO_HASTA)) = 'S'
                        and al.f_anulacion  is null),
 
+recuperatorio as (select ap.n_id_alu_prog aluprog_q5, m.d_descrip materia, nvl(al.d_nota_letra, al.n_nota_numero) nota
+                    from alumnos_programas ap,
+                       alumnos_programas ap2,      
+                       alumnos_libretas  al,
+                       materias          m
+                         where ap2.d_registro        = ap.d_registro
+                           and ap2.n_id_alu_prog     = al.n_id_alu_prog   
+                           and m.n_id_materia       = al.n_id_materia
+                           and al.m_aprueba_mat      = 'No'
+                           and al.c_clase_evalua     in ('Final','RECUFIN','Tesis')
+                           and nvl(al.d_nota_letra,'-') = 'R'
+                           and fun_between_fechas(al.f_rinde, al.f_rinde, (select vw.f_inicio from vw_calendarios vw      where vw.n_id_cal_periodo = :P1_PERIODO_HASTA), (select vw.f_fin from vw_calendarios vw      where vw.n_id_cal_periodo = :P1_PERIODO_HASTA)) = 'S'
+                           and al.f_anulacion  is null),
+
 bajas as (select ca.d_descred, ap.n_id_alu_prog n_id_alu_prog_q4
             from alumnos_programas ap,
                 vw_cursos_alumnos ca
@@ -97,6 +111,7 @@ SELECT distinct a. promocion "Promocion", a.alumno "Alumno", a.legajo "Legajo", 
         (select pac_bloqueos_udesa.cant_aplazos_alumno (a.n_id_alu_prog , 'N') from dual) "Aplazos Totales", a.cuotas_faltantes "Cuotas Faltantes",
         (select nvl(Listagg(ap.materia || ': ' || ap.nota, ' / ') Within Group (Order By 1), '---') from aplazos ap where a.n_id_alu_prog = ap.aluprog_q2) "Aplazos del Periodo",
         (select nvl(Listagg(b.d_descred, ' / ') Within Group (Order By 1), '---') from bajas b where a.n_id_alu_prog = b.n_id_alu_prog_q4) "Bajas Materias",
+        (select nvl(Listagg(r.materia, ' / ') Within Group (Order By 1), '---') from recuperatorio r where a.n_id_alu_prog = r.aluprog_q5) "Materias en recuperatorio",
         (select nvl(Listagg(ab.desc_beca || ' ' || ab.porc_beca || '%', ' / ') Within Group (Order By 1), '---') from alumnos_becas ab where a.n_id_alu_prog = ab.aluprog_q3) "Asistencia financiera",
         a.mail_udesa "E-mail UdeSA", a.mail_personal "E-mail Personal", a.mail_resp "E-mail Resp Arancel",
          case when a.prom_acumulado is null and a.promedio_general < 6 then 'Primer año con promedio inferior a 6 puntos' when a.prom_acumulado is not null and a.promedio_general < 6.5 and a.prom_acumulado < 6.5 then 'No alcanzaste el promedio igual o superior a 6,50' else '' end "Msj. Promedio",
